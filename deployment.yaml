@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: namespace
+metadata:
+  name: global-images
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: global-image-puller-operator
+  namespace: global-images
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      application: global-image-puller-operator
+  template:
+    metadata:
+      labels:
+        application: global-image-puller-operator
+    spec:
+      serviceAccountName: global-image-puller-operator
+      containers:
+      - name: global-image-puller-operator
+        image: paulczar/global-image-puller-operator

@@ -1,0 +1,50 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: "global-images"
+  name: global-image-puller-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: global-image-puller-operator
+rules:
+  - apiGroups: [""]
+    resources: [namespaces]
+    verbs: [list, watch, get]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: global-image-puller-operator
+rules:
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["ClusterRoleBindings"]
+    verbs: [list, watch, create, get, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: global-image-puller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: global-image-puller
+subjects:
+  - kind: ServiceAccount
+    name: global-image-puller
+    namespace: "global-images"
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  namespace: "global-images"
+  name: global-image-puller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: global-image-puller
+subjects:
+  - kind: ServiceAccount
+    name: global-image-puller
