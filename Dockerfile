@@ -1,4 +1,5 @@
-FROM python:3.7
-ADD . /src
-RUN pip install kopf
-CMD kopf run global-image-puller --verbose
+FROM registry.access.redhat.com/ubi8/python-38
+COPY requirements.txt ./
+COPY global-image-puller.py ./
+RUN pip install -r requirements.txt
+CMD ./global-image-puller.py

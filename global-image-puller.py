@@ -1,4 +1,5 @@
-import json
+#!/bin/env python
+
 import yaml
 from kubernetes import client, config, watch
 from kubernetes.client.rest import ApiException
@@ -14,7 +15,7 @@ def main():
     # api_client = client.api_client.ApiClient(configuration=configuration)
     v1 = client.CoreV1Api()
     rbac_v1 = client.RbacAuthorizationV1Api()
-
+    common_images_namespace = os.getenv("COMMON_IMAGES_NAMESPACE", "global-images")
     while True:
         stream = watch.Watch().stream(v1.list_namespace)
         for event in stream:
@@ -30,7 +31,7 @@ def main():
                     print("namespace %s was deleted" % name)
                     try:
                         print("deleting rolebinding for %s" % name )
-                        rbac_v1.delete_namespaced_role_binding(crb_name, "system-images")
+                        rbac_v1.delete_namespaced_role_binding(crb_name, common_images_namespace)
                     except ApiException as e:
                         if e.status == 404:
                             continue
@@ -38,6 +39,8 @@ def main():
                             print("Exception when calling RbacAuthorizationV1Api->read_cluster_role_binding: %s\n" % e)
                             continue
                 if operation == "ADDED":
+                    # todo we should add a finalizer to the namespace
+                    # on creation, then remove on delete.
                     print("namespace %s was added" % name)
                     # body = client.V1ClusterRoleBinding()
                     body = yaml.safe_load(f"""
@@ -55,12 +58,12 @@ def main():
                       namespace: {name}
                     """)
                     try:
-                        crb = rbac_v1.read_namespaced_role_binding(crb_name, "system-images")
+                        crb = rbac_v1.read_namespaced_role_binding(crb_name, common_images_namespace)
                         # pprint(api_response)
                     except ApiException as e:
                         if e.status == 404:
                             print("Creating rolebinding for {}".format(name))
-                            rbac_v1.create_namespaced_role_binding("system-images", body)
+                            rbac_v1.create_namespaced_role_binding(common_images_namespace, body)
                             continue
                         else:
                             print("Exception when calling RbacAuthorizationV1Api->read_cluster_role_binding: %s\n" % e)
